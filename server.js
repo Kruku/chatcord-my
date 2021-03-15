@@ -2,31 +2,49 @@ const path = require('path');
 const http = require('http');
 const express = require('express');
 const socketio = require('socket.io');
+const formatMessage = require('./utils/messages');
+const {
+    userJoin,
+    getCurrentUSer
+} = require('./utils/users');
 
 const app = express();
 const server = http.createServer(app);
 const io = socketio(server);
 
 //set static folder
-app.use(express.static(path.join(__dirname, 'public')))
+app.use(express.static(path.join(__dirname, 'public')));
+
+const botName = 'chatBot';
 
 //run when clients connects
 io.on('connection', socket => {
-    //Welcome new user
-    socket.emit('message', 'Welcome to ChatCord!');
+    socket.on('joinRom', ({
+        username,
+        room
+    }) => {
+        const user = userJoin(socket.id, username, room);
 
-    //Broadcast when user connect
-    socket.broadcast.emit('message', 'User has joined the chat');
+        socket.join(user.room);
 
-    //Run when user discconect
-    socket.on('disconnect', () => {
-        io.emit('message', 'User has left the chat');
+        //Welcome current user
+        socket.emit('message', formatMessage(botName, 'Welcome to ChatCord!'));
+
+        //Broadcast when user connect
+        socket.broadcast.emit('message', formatMessage(botName, 'User has joined the chat'));
+
     });
 
     //Listen for message
-    socket.on('chatMessage', (msg) => {
-        io.emit('message', msg);
+    socket.on('chatMessage', msg => {
+        io.emit('message', formatMessage('USER', msg));
     });
+
+    //Run when user discconect
+    socket.on('disconnect', () => {
+        io.emit('message', formatMessage(botName, 'User has left the chat'));
+    });
+
 });
 
 
