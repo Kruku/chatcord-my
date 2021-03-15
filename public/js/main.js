@@ -9,7 +9,8 @@ socket.on('message', message => {
     outputMessage(message);
 
     //scroll down
-    chatMessages.scrollTop = chatMessages.scrollHeigth;
+    chatMessages.scroll(0, chatMessages.scrollHeight);
+
 });
 
 //mesgae submit
